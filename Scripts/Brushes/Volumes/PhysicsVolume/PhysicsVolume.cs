@@ -4,7 +4,7 @@ using System;
 using System.Linq;
 using UnityEngine;
 
-namespace Sabresaurus.SabreCSG
+namespace Sabresaurus.SabreCSG.Volumes
 {
     /// <summary>
     /// Applies forces to rigid bodies inside of the volume.
@@ -17,13 +17,13 @@ namespace Sabresaurus.SabreCSG
         /// The force mode applied to rigid bodies.
         /// </summary>
         [SerializeField]
-        public PhysicsVolumeForceMode forceMode = PhysicsVolumeForceMode.Force;
+        public PhysicsVolumeForceMode forceMode = PhysicsVolumeForceMode.None;
 
         /// <summary>
         /// The force applied to rigid bodies.
         /// </summary>
         [SerializeField]
-        public Vector3 force = new Vector3(0.0f, 10.0f, 0.0f);
+        public Vector3 force = new Vector3(0.0f, 0.0f, 0.0f);
 
         /// <summary>
         /// The relative force mode applied to rigid bodies.
@@ -61,7 +61,42 @@ namespace Sabresaurus.SabreCSG
         [SerializeField]
         public Vector3 relativeTorque = new Vector3(0.0f, 0.0f, 0.0f);
 
+        /// <summary>
+        /// The gravity settings applied to rigid bodies inside the volume.
+        /// </summary>
+        [SerializeField]
+        public PhysicsVolumeGravityMode gravity = PhysicsVolumeGravityMode.None;
+
+        /// <summary>
+        /// The layer mask to limit the effects of the physics volume to specific layers.
+        /// </summary>
+        [SerializeField]
+        public LayerMask layer = -1;
+
+        /// <summary>
+        /// Whether to use a filter tag.
+        /// </summary>
+        [SerializeField]
+        public bool useFilterTag = false;
+
+        /// <summary>
+        /// The filter tag to limit the effects of the physics volume to specific tags.
+        /// </summary>
+        [SerializeField]
+        public string filterTag = "Untagged";
+
 #if UNITY_EDITOR
+
+        /// <summary>
+        /// Gets the brush preview material shown in the editor.
+        /// </summary>
+        public override Material BrushPreviewMaterial
+        {
+            get
+            {
+                return (Material)SabreCSGResources.LoadObject("Resources/Materials/scsg_volume_physics.mat");
+            }
+        }
 
         /// <summary>
         /// Called when the inspector GUI is drawn in the editor.
@@ -213,9 +248,62 @@ namespace Sabresaurus.SabreCSG
             }
             GUILayout.EndVertical();
 
+            // general options:
+
+            GUILayout.BeginVertical("Box");
+            {
+                UnityEditor.EditorGUILayout.LabelField("General Options", UnityEditor.EditorStyles.boldLabel);
+                GUILayout.Space(4);
+
+                UnityEditor.EditorGUI.indentLevel = 1;
+                GUILayout.BeginVertical();
+                {
+                    LayerMask previousLayerMask;
+                    layer = SabreGUILayout.LayerMaskField(new GUIContent("Layer Mask", "The layer mask to limit the effects of the physics volume to specific layers."), (previousLayerMask = layer).value);
+                    if (previousLayerMask != layer)
+                    {
+                        foreach (PhysicsVolume volume in physicsVolumes)
+                            volume.layer = layer;
+                        invalidate = true;
+                    }
+
+                    bool previousBoolean;
+                    useFilterTag = UnityEditor.EditorGUILayout.Toggle(new GUIContent("Use Filter Tag", "Whether to use a filter tag."), previousBoolean = useFilterTag);
+                    if (useFilterTag != previousBoolean)
+                    {
+                        foreach (PhysicsVolume volume in physicsVolumes)
+                            volume.useFilterTag = useFilterTag;
+                        invalidate = true;
+                    }
+
+                    if (useFilterTag)
+                    {
+                        string previousString;
+                        filterTag = UnityEditor.EditorGUILayout.TagField(new GUIContent("Filter Tag", "The filter tag to limit the effects of the physics volume to specific tags."), previousString = filterTag);
+                        if (filterTag != previousString)
+                        {
+                            foreach (PhysicsVolume volume in physicsVolumes)
+                                volume.filterTag = filterTag;
+                            invalidate = true;
+                        }
+                    }
+
+                    PhysicsVolumeGravityMode previousPhysicsVolumeGravityMode;
+                    gravity = (PhysicsVolumeGravityMode)UnityEditor.EditorGUILayout.EnumPopup(new GUIContent("Gravity", "The gravity settings applied to rigid bodies inside the volume."), previousPhysicsVolumeGravityMode = gravity);
+                    if (previousPhysicsVolumeGravityMode != gravity)
+                    {
+                        foreach (PhysicsVolume volume in physicsVolumes)
+                            volume.gravity = gravity;
+                        invalidate = true;
+                    }
+                }
+                GUILayout.EndVertical();
+                UnityEditor.EditorGUI.indentLevel = 0;
+            }
+            GUILayout.EndVertical();
+
             return invalidate; // true when a property changed, the brush invalidates and stores all changes.
         }
-
 #endif
 
         /// <summary>
@@ -233,6 +321,10 @@ namespace Sabresaurus.SabreCSG
             component.torque = torque;
             component.relativeTorqueForceMode = relativeTorqueForceMode;
             component.relativeTorque = relativeTorque;
+            component.gravity = gravity;
+            component.layer = layer;
+            component.useFilterTag = useFilterTag;
+            component.filterTag = filterTag;
         }
     }
 }

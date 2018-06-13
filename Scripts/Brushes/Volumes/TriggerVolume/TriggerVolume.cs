@@ -1,223 +1,179 @@
 ﻿#if UNITY_EDITOR || RUNTIME_CSG
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Sabresaurus.SabreCSG
+namespace Sabresaurus.SabreCSG.Volumes
 {
-	/// <summary>
-	/// Executes trigger logic when objects interact with the volume.
-	/// </summary>
-	/// <seealso cref="Sabresaurus.SabreCSG.Volume"/>
-	[Serializable]
-	public class TriggerVolume : Volume
-	{
-		[SerializeField]
-		public TriggerVolumeEventType volumeEventType = TriggerVolumeEventType.SendMessage;
+    /// <summary>
+    /// Executes trigger logic when objects interact with the volume.
+    /// </summary>
+    /// <seealso cref="Sabresaurus.SabreCSG.Volume"/>
+    [Serializable]
+    public class TriggerVolume : Volume
+    {
+        /// <summary>
+        /// The trigger type, this is reserved for future use.
+        /// </summary>
+        [SerializeField]
+        public TriggerVolumeTriggerType triggerType = TriggerVolumeTriggerType.UnityEvent;
 
-		[SerializeField]
-		public TriggerVolumeTriggerMode triggerMode = TriggerVolumeTriggerMode.Enter;
+        /// <summary>
+        /// Whether to use a filter tag.
+        /// </summary>
+        [SerializeField]
+        public bool useFilterTag = false;
 
-		[SerializeField]
-		public string filterTag = "Untagged";
+        /// <summary>
+        /// The filter tag to limit the colliders that can invoke the trigger.
+        /// </summary>
+        [SerializeField]
+        public string filterTag = "Untagged";
 
-		[SerializeField]
-		public LayerMask layerMask = 0;
+        /// <summary>
+        /// The layer mask to limit the colliders that can invoke the trigger.
+        /// </summary>
+        [SerializeField]
+        public LayerMask layer = -1;
 
-		[SerializeField]
-		public bool triggerOnce = false;
+        /// <summary>
+        /// Whether the trigger can only be instigated once.
+        /// </summary>
+        [SerializeField]
+        public bool triggerOnceOnly = false;
 
-		[SerializeField]
-		public TriggerVolumeEvent onEnterEvent;
+        /// <summary>
+        /// The event called when a collider enters the trigger volume.
+        /// </summary>
+        [SerializeField]
+        public TriggerVolumeEvent onEnterEvent;
 
-		[SerializeField]
-		public TriggerVolumeEvent onStayEvent;
+        /// <summary>
+        /// The event called when a collider stays in the trigger volume.
+        /// </summary>
+        [SerializeField]
+        public TriggerVolumeEvent onStayEvent;
 
-		[SerializeField]
-		public TriggerVolumeEvent onExitEvent;
-
-		[SerializeField]
-		public List<SendMessageEvent> smOnEnterEvent;
-
-		[SerializeField]
-		public List<SendMessageEvent> smOnStayEvent;
-
-		[SerializeField]
-		public List<SendMessageEvent> smOnExitEvent;
+        /// <summary>
+        /// The event called when a collider exits the trigger volume.
+        /// </summary>
+        [SerializeField]
+        public TriggerVolumeEvent onExitEvent;
 
 #if UNITY_EDITOR
 
-		/// <summary>
-		/// Called when the inspector GUI is drawn in the editor.
-		/// </summary>
-		/// <param name="selectedVolumes">The selected volumes in the editor (for multi-editing).</param>
-		/// <returns>True if a property changed or else false.</returns>
-		public override bool OnInspectorGUI( Volume[] selectedVolumes )
-		{
-			var triggerVolumes = selectedVolumes.Cast<TriggerVolume>();
-			bool invalidate = false;
+        /// <summary>
+        /// Gets the brush preview material shown in the editor.
+        /// </summary>
+        public override Material BrushPreviewMaterial
+        {
+            get
+            {
+                return (Material)SabreCSGResources.LoadObject("Resources/Materials/scsg_volume_trigger.mat");
+            }
+        }
 
-			GUILayout.BeginVertical( "Box" );
-			{
-				UnityEditor.EditorGUILayout.LabelField( "Trigger Options", UnityEditor.EditorStyles.boldLabel );
-				GUILayout.Space( 4 );
+        /// <summary>
+        /// Called when the inspector GUI is drawn in the editor.
+        /// </summary>
+        /// <param name="selectedVolumes">The selected volumes in the editor (for multi-editing).</param>
+        /// <returns>True if a property changed or else false.</returns>
+        public override bool OnInspectorGUI(Volume[] selectedVolumes)
+        {
+            var triggerVolumes = selectedVolumes.Cast<TriggerVolume>();
+            bool invalidate = false;
 
-				UnityEditor.EditorGUI.indentLevel = 1;
+            GUILayout.BeginVertical("Box");
+            {
+                UnityEditor.EditorGUILayout.LabelField("Trigger Options", UnityEditor.EditorStyles.boldLabel);
+                GUILayout.Space(4);
 
-				GUILayout.BeginVertical();
-				{
-					TriggerVolumeEventType previousVolumeEventType;
-					volumeEventType = (TriggerVolumeEventType)UnityEditor.EditorGUILayout.EnumPopup( new GUIContent( "Trigger Event Type" ), previousVolumeEventType = volumeEventType );
-					if( volumeEventType != previousVolumeEventType )
-					{
-						foreach( TriggerVolume volume in triggerVolumes )
-							volume.volumeEventType = volumeEventType;
-						invalidate = true;
-					}
+                UnityEditor.EditorGUI.indentLevel = 1;
 
-					TriggerVolumeTriggerMode previousTriggerMode;
-					triggerMode = (TriggerVolumeTriggerMode)UnityEditor.EditorGUILayout.EnumPopup( new GUIContent( "Trigger Mode", "What kind of trigger events do we want to use?" ), previousTriggerMode = triggerMode );
-					if( triggerMode != previousTriggerMode )
-					{
-						foreach( TriggerVolume volume in triggerVolumes )
-							volume.triggerMode = triggerMode;
-						invalidate = true;
-					}
+                GUILayout.BeginVertical();
+                {
+                    // this is hidden so that we can introduce more trigger types in the future.
 
-					LayerMask previousLayerMask;
-					layerMask = UnityEditor.EditorGUILayout.LayerField( new GUIContent( "Layer", "The layer that is detected by this trigger." ), previousLayerMask = layerMask );
-					if( layerMask != previousLayerMask )
-					{
-						foreach( TriggerVolume volume in triggerVolumes )
-							volume.layerMask = layerMask;
-						invalidate = true;
-					}
+                    //TriggerVolumeTriggerType previousVolumeEventType;
+                    //triggerType = (TriggerVolumeTriggerType)UnityEditor.EditorGUILayout.EnumPopup(new GUIContent("Trigger Type"), previousVolumeEventType = triggerType);
+                    //if (triggerType != previousVolumeEventType)
+                    //{
+                    //    foreach (TriggerVolume volume in triggerVolumes)
+                    //        volume.triggerType = triggerType;
+                    //    invalidate = true;
+                    //}
 
-					string previousFilterTag;
-					filterTag = UnityEditor.EditorGUILayout.TagField( new GUIContent( "Tag", "The tag that is detected by this trigger." ), previousFilterTag = filterTag );
-					if( filterTag != previousFilterTag )
-					{
-						foreach( TriggerVolume volume in triggerVolumes )
-							volume.filterTag = filterTag;
-						invalidate = true;
-					}
-
-					bool previousTriggerOnce;
-					triggerOnce = UnityEditor.EditorGUILayout.Toggle( new GUIContent( "Trigger Once", "Is this a one use only trigger?" ), previousTriggerOnce = triggerOnce );
-					if( triggerOnce != previousTriggerOnce )
-					{
-						foreach( TriggerVolume volume in triggerVolumes )
-							volume.triggerOnce = triggerOnce;
-						invalidate = true;
-					}
-				}
-				GUILayout.EndVertical();
-
-				UnityEditor.EditorGUI.indentLevel = 0;
-			}
-			GUILayout.EndVertical();
-
-			GUILayout.BeginVertical( "Box" );
-			{
-				UnityEditor.EditorGUILayout.LabelField( "Trigger Events", UnityEditor.EditorStyles.boldLabel );
-				GUILayout.Space( 4 );
-
-				if( volumeEventType == TriggerVolumeEventType.UnityEvent )
-				{
-					UnityEditor.EditorGUI.indentLevel = 1;
-
-					GUILayout.BeginVertical();
-					{
-#if UNITY_2018
-						UnityEditor.SerializedObject tv = new UnityEditor.SerializedObject( this );
-						UnityEditor.SerializedProperty prop1 = tv.FindProperty( "onEnterEvent" );
-						UnityEditor.SerializedProperty prop2 = tv.FindProperty( "onStayEvent" );
-						UnityEditor.SerializedProperty prop3 = tv.FindProperty( "onExitEvent" );
-
-						UnityEditor.EditorGUI.BeginChangeCheck();
-
-						if( triggerMode == TriggerVolumeTriggerMode.Enter ||
-							triggerMode == TriggerVolumeTriggerMode.EnterExit ||
-							triggerMode == TriggerVolumeTriggerMode.EnterStay ||
-							triggerMode == TriggerVolumeTriggerMode.All )
-						{
-							UnityEditor.EditorGUILayout.PropertyField( prop1 );
-						}
-
-						if( triggerMode == TriggerVolumeTriggerMode.Stay ||
-							triggerMode == TriggerVolumeTriggerMode.EnterStay ||
-							triggerMode == TriggerVolumeTriggerMode.All )
-						{
-							UnityEditor.EditorGUILayout.PropertyField( prop2 );
-						}
-
-						if( triggerMode == TriggerVolumeTriggerMode.Exit ||
-							triggerMode == TriggerVolumeTriggerMode.EnterExit ||
-							triggerMode == TriggerVolumeTriggerMode.All )
-						{
-							UnityEditor.EditorGUILayout.PropertyField( prop3 );
-						}
-
-						if( UnityEditor.EditorGUI.EndChangeCheck() )
-						{
-							tv.ApplyModifiedProperties();
-							foreach( TriggerVolume volume in triggerVolumes )
-							{
-								volume.onEnterEvent = onEnterEvent;
-								volume.onStayEvent = onStayEvent;
-								volume.onExitEvent = onExitEvent;
-							}
-							invalidate = true;
-						}
-#else
-                    var e = UnityEditor.Editor.CreateEditor(this);
-                    if (e != null)
+                    LayerMask previousLayerMask;
+                    layer = SabreGUILayout.LayerMaskField(new GUIContent("Layer Mask", "The layer mask to limit the colliders that can invoke the trigger."), (previousLayerMask = layer).value);
+                    if (previousLayerMask != layer)
                     {
-                        UnityEditor.EditorGUI.BeginChangeCheck();
-                        var so = e.serializedObject;
-                        so.Update();
-                        var prop = so.GetIterator();
-                        prop.NextVisible(true);
-                        while (prop.NextVisible(true))
+                        foreach (TriggerVolume volume in triggerVolumes)
+                            volume.layer = layer;
+                        invalidate = true;
+                    }
+
+                    bool previousUseFilterTag;
+                    useFilterTag = UnityEditor.EditorGUILayout.Toggle(new GUIContent("Use Filter Tag", "Whether to use a filter tag."), previousUseFilterTag = useFilterTag);
+                    if (useFilterTag != previousUseFilterTag)
+                    {
+                        foreach (TriggerVolume volume in triggerVolumes)
+                            volume.useFilterTag = useFilterTag;
+                        invalidate = true;
+                    }
+
+                    if (useFilterTag)
+                    {
+                        string previousFilterTag;
+                        filterTag = UnityEditor.EditorGUILayout.TagField(new GUIContent("Filter Tag", "The filter tag to limit the colliders that can invoke the trigger."), previousFilterTag = filterTag);
+                        if (filterTag != previousFilterTag)
                         {
-                            string path = prop.propertyPath;
-                            if (path == "onEnterEvent")
-                            {
-                                UnityEditor.EditorGUILayout.LabelField("On Enter Event", UnityEditor.EditorStyles.boldLabel);
-                                UnityEditor.EditorGUILayout.HelpBox("This Unity version has a bug that does not save the value you enter in the event. Please make use of the fields below them instead. If you know why this happens and a way to fix it, please contact us!", UnityEditor.MessageType.Warning);
-                            }
-                            if (path == "onStayEvent")
-                            {
-                                UnityEditor.EditorGUILayout.Space();
-                                UnityEditor.EditorGUILayout.LabelField("On Stay Event", UnityEditor.EditorStyles.boldLabel);
-                                UnityEditor.EditorGUILayout.HelpBox("This Unity version has a bug that does not save the value you enter in the event. Please make use of the fields below them instead. If you know why this happens and a way to fix it, please contact us!", UnityEditor.MessageType.Warning);
-                            }
-                            if (path == "onExitEvent")
-                            {
-                                UnityEditor.EditorGUILayout.Space();
-                                UnityEditor.EditorGUILayout.LabelField("On Exit Event", UnityEditor.EditorStyles.boldLabel);
-                                UnityEditor.EditorGUILayout.HelpBox("This Unity version has a bug that does not save the value you enter in the event. Please make use of the fields below them instead. If you know why this happens and a way to fix it, please contact us!", UnityEditor.MessageType.Warning);
-                            }
-                            if (path != "onEnterEvent" && path != "onStayEvent" && path != "onExitEvent")
-                            {
-                                int idx = path.IndexOf(".data[");
-                                if (idx == -1)
-                                    continue;
-                                int end = path.IndexOf(']', idx);
-                                int num;
-                                if (!Int32.TryParse(path.Substring(idx + 6, end - idx - 6), out num))
-                                    continue;
-                                if (!path.Contains("m_IntArgument") && !path.Contains("m_FloatArgument") && !path.Contains("m_StringArgument") && !path.Contains("m_BoolArgument"))
-                                    continue;
-                            }
-                            UnityEditor.EditorGUILayout.PropertyField(prop, new GUIContent("Event " + prop.propertyPath.Replace("onEnterEvent", "").Replace("onStayEvent", "").Replace("onExitEvent", "").Replace(".m_PersistentCalls.m_Calls.Array.data[", "").Replace("].m_Arguments.m_", " ").Replace("Argument", " Argument")));
+                            foreach (TriggerVolume volume in triggerVolumes)
+                                volume.filterTag = filterTag;
+                            invalidate = true;
                         }
+                    }
+
+                    bool previousTriggerOnce;
+                    triggerOnceOnly = UnityEditor.EditorGUILayout.Toggle(new GUIContent("Trigger Once Only", "Whether the trigger can only be instigated once."), previousTriggerOnce = triggerOnceOnly);
+                    if (triggerOnceOnly != previousTriggerOnce)
+                    {
+                        foreach (TriggerVolume volume in triggerVolumes)
+                            volume.triggerOnceOnly = triggerOnceOnly;
+                        invalidate = true;
+                    }
+                }
+                GUILayout.EndVertical();
+
+                UnityEditor.EditorGUI.indentLevel = 0;
+            }
+            GUILayout.EndVertical();
+
+            GUILayout.BeginVertical("Box");
+            {
+                UnityEditor.EditorGUILayout.LabelField("Trigger Events", UnityEditor.EditorStyles.boldLabel);
+                GUILayout.Space(4);
+
+                if (triggerType == TriggerVolumeTriggerType.UnityEvent)
+                {
+                    UnityEditor.EditorGUI.indentLevel = 1;
+
+                    GUILayout.BeginVertical();
+                    {
+                        UnityEditor.SerializedObject tv = new UnityEditor.SerializedObject(this);
+                        UnityEditor.SerializedProperty prop1 = tv.FindProperty("onEnterEvent");
+                        UnityEditor.SerializedProperty prop2 = tv.FindProperty("onStayEvent");
+                        UnityEditor.SerializedProperty prop3 = tv.FindProperty("onExitEvent");
+
+                        UnityEditor.EditorGUI.BeginChangeCheck();
+
+                        UnityEditor.EditorGUILayout.PropertyField(prop1);
+                        UnityEditor.EditorGUILayout.PropertyField(prop2);
+                        UnityEditor.EditorGUILayout.PropertyField(prop3);
 
                         if (UnityEditor.EditorGUI.EndChangeCheck())
                         {
-                            so.ApplyModifiedProperties();
+                            tv.ApplyModifiedProperties();
                             foreach (TriggerVolume volume in triggerVolumes)
                             {
                                 volume.onEnterEvent = onEnterEvent;
@@ -227,73 +183,35 @@ namespace Sabresaurus.SabreCSG
                             invalidate = true;
                         }
                     }
-#endif
-					}
-					GUILayout.EndVertical();
+                    GUILayout.EndVertical();
 
-					UnityEditor.EditorGUI.indentLevel = 0;
-				}
-				else
-				{
-					UnityEditor.EditorGUI.BeginChangeCheck();
+                    UnityEditor.EditorGUI.indentLevel = 0;
+                }
+            }
+            GUILayout.EndVertical();
 
-					if( triggerMode == TriggerVolumeTriggerMode.Enter ||
-						triggerMode == TriggerVolumeTriggerMode.EnterExit ||
-						triggerMode == TriggerVolumeTriggerMode.EnterStay ||
-						triggerMode == TriggerVolumeTriggerMode.All )
-					{
-						smOnEnterEvent = TriggerVolumeUIUtils.DrawSendMessageEventInspector( new GUIContent( "On Enter Message ()" ), smOnEnterEvent );
-					}
-
-					if( triggerMode == TriggerVolumeTriggerMode.Stay ||
-						triggerMode == TriggerVolumeTriggerMode.EnterStay ||
-						triggerMode == TriggerVolumeTriggerMode.All )
-					{
-						smOnStayEvent = TriggerVolumeUIUtils.DrawSendMessageEventInspector( new GUIContent( "On Stay Message ()" ), smOnStayEvent );
-					}
-
-					if( triggerMode == TriggerVolumeTriggerMode.Exit ||
-						triggerMode == TriggerVolumeTriggerMode.EnterExit ||
-						triggerMode == TriggerVolumeTriggerMode.All )
-					{
-						smOnExitEvent = TriggerVolumeUIUtils.DrawSendMessageEventInspector( new GUIContent( "On Exit Message ()" ), smOnExitEvent );
-					}
-
-					if( UnityEditor.EditorGUI.EndChangeCheck() )
-					{
-						foreach( TriggerVolume volume in triggerVolumes )
-						{
-							volume.smOnEnterEvent = smOnEnterEvent;
-							volume.smOnStayEvent = smOnStayEvent;
-							volume.smOnExitEvent = smOnExitEvent;
-						}
-						invalidate = true;
-					}
-				}
-			}
-			GUILayout.EndVertical();
-
-			return invalidate;
-		}
+            return invalidate;
+        }
 
 #endif
 
-		public override void OnCreateVolume( GameObject volume )
-		{
-			TriggerVolumeComponent tvc = volume.AddComponent<TriggerVolumeComponent>();
-			tvc.volumeEventType = volumeEventType;
-			tvc.triggerMode = triggerMode;
-			tvc.filterTag = filterTag;
-			tvc.layerMask = layerMask;
-			tvc.triggerOnce = triggerOnce;
-			tvc.onEnterEvent = onEnterEvent;
-			tvc.onStayEvent = onStayEvent;
-			tvc.onExitEvent = onExitEvent;
-			tvc.smOnEnterEvent = smOnEnterEvent;
-			tvc.smOnStayEvent = smOnStayEvent;
-			tvc.smOnExitEvent = smOnExitEvent;
-		}
-	}
+        /// <summary>
+        /// Called when the volume is created in the editor.
+        /// </summary>
+        /// <param name="volume">The generated volume game object.</param>
+        public override void OnCreateVolume(GameObject volume)
+        {
+            TriggerVolumeComponent tvc = volume.AddComponent<TriggerVolumeComponent>();
+            tvc.triggerType = triggerType;
+            tvc.useFilterTag = useFilterTag;
+            tvc.filterTag = filterTag;
+            tvc.layer = layer;
+            tvc.triggerOnceOnly = triggerOnceOnly;
+            tvc.onEnterEvent = onEnterEvent;
+            tvc.onStayEvent = onStayEvent;
+            tvc.onExitEvent = onExitEvent;
+        }
+    }
 }
 
 #endif
