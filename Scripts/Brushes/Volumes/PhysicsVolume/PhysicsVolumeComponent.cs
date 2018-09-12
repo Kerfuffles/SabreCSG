@@ -40,6 +40,14 @@ namespace Sabresaurus.SabreCSG.Volumes
         /// The force mode applied to rigid bodies.
         /// </summary>
         public PhysicsVolumeForceMode forceMode = PhysicsVolumeForceMode.None;
+<<<<<<< HEAD
+=======
+
+        /// <summary>
+        /// The force space mode applied to rigid bodies.
+        /// </summary>
+        public PhysicsVolumeForceSpace forceSpace = PhysicsVolumeForceSpace.Relative;
+>>>>>>> master
 
         /// <summary>
         /// The force applied to rigid bodies.
@@ -52,6 +60,11 @@ namespace Sabresaurus.SabreCSG.Volumes
         public PhysicsVolumeForceMode relativeForceMode = PhysicsVolumeForceMode.None;
 
         /// <summary>
+        /// The relative force space mode applied to rigid bodies.
+        /// </summary>
+        public PhysicsVolumeForceSpace relativeForceSpace = PhysicsVolumeForceSpace.Relative;
+
+        /// <summary>
         /// The relative force applied to rigid bodies.
         /// </summary>
         public Vector3 relativeForce = new Vector3(0.0f, 0.0f, 0.0f);
@@ -62,6 +75,11 @@ namespace Sabresaurus.SabreCSG.Volumes
         public PhysicsVolumeForceMode torqueForceMode = PhysicsVolumeForceMode.None;
 
         /// <summary>
+        /// The torque force space mode applied to rigid bodies.
+        /// </summary>
+        public PhysicsVolumeForceSpace torqueSpace = PhysicsVolumeForceSpace.Relative;
+
+        /// <summary>
         /// The torque applied to rigid bodies.
         /// </summary>
         public Vector3 torque = new Vector3(0.0f, 0.0f, 0.0f);
@@ -70,6 +88,11 @@ namespace Sabresaurus.SabreCSG.Volumes
         /// The relative torque force mode applied to rigid bodies.
         /// </summary>
         public PhysicsVolumeForceMode relativeTorqueForceMode = PhysicsVolumeForceMode.None;
+
+        /// <summary>
+        /// The relative torque force space mode applied to rigid bodies.
+        /// </summary>
+        public PhysicsVolumeForceSpace relativeTorqueSpace = PhysicsVolumeForceSpace.Relative;
 
         /// <summary>
         /// The relative torque applied to rigid bodies.
@@ -124,79 +147,83 @@ namespace Sabresaurus.SabreCSG.Volumes
                     continue;
                 }
                 // apply the force to the rigid body.
+                Vector3 appliedForce = forceSpace == PhysicsVolumeForceSpace.Relative ? transform.rotation * force : force;
                 switch (forceMode)
                 {
                     case PhysicsVolumeForceMode.Force:
-                        rigidbody.AddForce(force, ForceMode.Force);
+                        rigidbody.AddForce(appliedForce, ForceMode.Force);
                         break;
 
                     case PhysicsVolumeForceMode.Impulse:
-                        rigidbody.AddForce(force, ForceMode.Impulse);
+                        rigidbody.AddForce(appliedForce, ForceMode.Impulse);
                         break;
 
                     case PhysicsVolumeForceMode.VelocityChange:
-                        rigidbody.AddForce(force, ForceMode.VelocityChange);
+                        rigidbody.AddForce(appliedForce, ForceMode.VelocityChange);
                         break;
 
                     case PhysicsVolumeForceMode.Acceleration:
-                        rigidbody.AddForce(force, ForceMode.Acceleration);
+                        rigidbody.AddForce(appliedForce, ForceMode.Acceleration);
                         break;
                 }
                 // apply the relative force to the rigid body.
+                Vector3 appliedRelativeForce = relativeForceSpace == PhysicsVolumeForceSpace.Relative ? transform.rotation * relativeForce : relativeForce;
                 switch (relativeForceMode)
                 {
                     case PhysicsVolumeForceMode.Force:
-                        rigidbody.AddRelativeForce(relativeForce, ForceMode.Force);
+                        rigidbody.AddRelativeForce(appliedRelativeForce, ForceMode.Force);
                         break;
 
                     case PhysicsVolumeForceMode.Impulse:
-                        rigidbody.AddRelativeForce(relativeForce, ForceMode.Impulse);
+                        rigidbody.AddRelativeForce(appliedRelativeForce, ForceMode.Impulse);
                         break;
 
                     case PhysicsVolumeForceMode.VelocityChange:
-                        rigidbody.AddRelativeForce(relativeForce, ForceMode.VelocityChange);
+                        rigidbody.AddRelativeForce(appliedRelativeForce, ForceMode.VelocityChange);
                         break;
 
                     case PhysicsVolumeForceMode.Acceleration:
-                        rigidbody.AddRelativeForce(relativeForce, ForceMode.Acceleration);
+                        rigidbody.AddRelativeForce(appliedRelativeForce, ForceMode.Acceleration);
                         break;
                 }
                 // apply the torque to the rigid body.
+                Vector3 appliedTorque = torqueSpace == PhysicsVolumeForceSpace.Relative ? transform.rotation * torque : torque;
                 switch (torqueForceMode)
                 {
                     case PhysicsVolumeForceMode.Force:
-                        rigidbody.AddTorque(torque, ForceMode.Force);
+                        rigidbody.AddTorque(appliedTorque, ForceMode.Force);
                         break;
 
                     case PhysicsVolumeForceMode.Impulse:
-                        rigidbody.AddTorque(torque, ForceMode.Impulse);
+                        rigidbody.AddTorque(appliedTorque, ForceMode.Impulse);
                         break;
 
                     case PhysicsVolumeForceMode.VelocityChange:
-                        rigidbody.AddTorque(torque, ForceMode.VelocityChange);
+                        rigidbody.AddTorque(appliedTorque, ForceMode.VelocityChange);
                         break;
 
                     case PhysicsVolumeForceMode.Acceleration:
-                        rigidbody.AddTorque(torque, ForceMode.Acceleration);
+                        rigidbody.AddTorque(appliedTorque, ForceMode.Acceleration);
                         break;
                 }
                 // apply the relative torque to the rigid body.
+                Vector3 appliedRelativeTorque = relativeTorqueSpace == PhysicsVolumeForceSpace.Relative ? transform.rotation * relativeTorque : relativeTorque;
                 switch (relativeTorqueForceMode)
                 {
                     case PhysicsVolumeForceMode.Force:
-                        rigidbody.AddRelativeTorque(relativeTorque, ForceMode.Force);
+                        rigidbody.AddRelativeTorque(appliedRelativeTorque, ForceMode.Force);
                         break;
 
                     case PhysicsVolumeForceMode.Impulse:
-                        rigidbody.AddRelativeTorque(relativeTorque, ForceMode.Impulse);
+                        rigidbody.AddRelativeTorque(appliedRelativeTorque, ForceMode.Impulse);
                         break;
 
                     case PhysicsVolumeForceMode.VelocityChange:
-                        rigidbody.AddRelativeTorque(relativeTorque, ForceMode.VelocityChange);
+                        rigidbody.AddRelativeTorque(appliedRelativeTorque, ForceMode.VelocityChange);
                         break;
 
                     case PhysicsVolumeForceMode.Acceleration:
-                        rigidbody.AddRelativeTorque(relativeTorque, ForceMode.Acceleration);
+                        rigidbody.AddRelativeTorque(appliedRelativeTorque, ForceMode.Acceleration);
                         break;
                 }
             }
@@ -223,6 +250,10 @@ namespace Sabresaurus.SabreCSG.Volumes
                 case PhysicsVolumeGravityMode.Enable:
                     rigidbody.useGravity = true;
                     break;
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
                 case PhysicsVolumeGravityMode.Disable:
                 case PhysicsVolumeGravityMode.ZeroGravity:
                 case PhysicsVolumeGravityMode.ZeroGravityRestore:
@@ -253,6 +284,10 @@ namespace Sabresaurus.SabreCSG.Volumes
                 case PhysicsVolumeGravityMode.ZeroGravity:
                     rigidbody.useGravity = true;
                     break;
+<<<<<<< HEAD
+=======
+
+>>>>>>> master
                 case PhysicsVolumeGravityMode.ZeroGravityRestore:
                     rigidbody.useGravity = trackedRigidbody.hadGravity;
                     break;

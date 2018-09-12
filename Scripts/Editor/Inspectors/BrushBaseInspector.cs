@@ -80,8 +80,10 @@ namespace Sabresaurus.SabreCSG
             // volume editing:
             if (BrushTargets.Any(b => b.Mode == CSGMode.Volume))
             {
-                using (new NamedVerticalScope("Volume"))
+                using (NamedVerticalScope scope = new NamedVerticalScope("Volume"))
                 {
+                    scope.WikiLink = "Brush-Volumes";
+
                     // find all of the volume types in the project:
                     List<System.Type> volumeTypes = Volume.FindAllInAssembly();
                     if (volumeTypes.Count == 0)
@@ -92,9 +94,10 @@ namespace Sabresaurus.SabreCSG
                     {
                         // find all of the volume brushes that are currently selected.
                         BrushBase[] volumeBrushes = BrushTargets.Where(b => b.Mode == CSGMode.Volume).ToArray();
+                        BrushBase volumeTarget = volumeBrushes.Contains(BrushTarget) ? BrushTarget : volumeBrushes.Last();
 
                         // make sure all volume brushes are of the same type (for multi-editing).
-                        object brushTargetVolumeType = BrushTarget.Volume ? BrushTarget.Volume.GetType() : null;
+                        System.Type brushTargetVolumeType = volumeTarget.Volume ? volumeTarget.Volume.GetType() : null;
                         if (volumeBrushes.Length > 1 && !volumeBrushes.All(b => b.Volume.GetType() == brushTargetVolumeType))
                         {
                             EditorGUILayout.LabelField("Cannot multi-edit volumes of different types!");
@@ -103,12 +106,12 @@ namespace Sabresaurus.SabreCSG
                         {
                             // let the user pick a volume type:
                             int selected = 0;
-                            if (BrushTarget.Volume != null)
+                            if (volumeTarget.Volume != null)
                             {
                                 for (int i = 0; i < volumeTypes.Count; i++)
                                 {
                                     selected = i;
-                                    if (BrushTarget.Volume.GetType() == volumeTypes[i])
+                                    if (volumeTarget.Volume.GetType() == volumeTypes[i])
                                         break;
                                 }
                             }
@@ -132,12 +135,12 @@ namespace Sabresaurus.SabreCSG
                             }
 
                             // custom volume inspector:
-                            if (BrushTarget.Volume.OnInspectorGUI(volumeBrushes.Select(b => b.Volume).ToArray()))
+                            if (volumeTarget.Volume.OnInspectorGUI(volumeBrushes.Select(b => b.Volume).ToArray()))
                             {
                                 if (serializedObject.targetObject != null)
                                 {
                                     serializedObject.ApplyModifiedProperties();
-                                    System.Array.ForEach(BrushTargets, item => item.Invalidate(true));
+                                    System.Array.ForEach(volumeBrushes, item => item.Invalidate(true));
                                 }
                             }
                         }
@@ -149,8 +152,10 @@ namespace Sabresaurus.SabreCSG
             DoInspectorGUI();
 
             // generic brush editing:
-            using (new NamedVerticalScope("Order"))
+            using (NamedVerticalScope scope = new NamedVerticalScope("Order"))
             {
+                scope.WikiLink = "Tutorial-1#additive-and-subtractive-brushes";
+
                 List<BrushBase> orderedTargets = BrushTargets.ToList();
                 orderedTargets.RemoveAll(item => (item == null));
                 orderedTargets.Sort((x, y) => x.transform.GetSiblingIndex().CompareTo(y.transform.GetSiblingIndex()));
