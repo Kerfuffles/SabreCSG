@@ -90,36 +90,18 @@ namespace Sabresaurus.SabreCSG
 
             CurrentSettings.OverrideFlyCamera = GUILayout.Toggle(CurrentSettings.OverrideFlyCamera, "Linear fly camera");
 
-            EditorGUI.BeginChangeCheck();
-            CurrentSettings.ShowExcludedPolygons = GUILayout.Toggle(CurrentSettings.ShowExcludedPolygons, "Show excluded polygons");
-            if (EditorGUI.EndChangeCheck())
-            {
-                // What's shown in the SceneView has potentially changed, so force it to repaint
-                SceneView.RepaintAll();
+            EditorGUILayout.Space();
+            using (new SabreEditorGUI.IndentLevelScope()) {
+                EditorGUILayout.LabelField("Experimental Options", EditorStyles.boldLabel);
             }
+            EditorGUILayout.Space();
 
-            EditorGUI.BeginChangeCheck();
-            CurrentSettings.ShowBrushesAsWireframes = GUILayout.Toggle(CurrentSettings.ShowBrushesAsWireframes, "Show brushes as wireframes");
-            if (EditorGUI.EndChangeCheck())
-            {
-                // What's shown in the SceneView has potentially changed, so force it to repaint
-                CSGModel.UpdateAllBrushesVisibility();
-                SceneView.RepaintAll();
-            }
-
-            EditorGUI.BeginChangeCheck();
-            CurrentSettings.ShowBrushBoundsGuideLines = GUILayout.Toggle(CurrentSettings.ShowBrushBoundsGuideLines, "Show brush bounds guide lines");
-            if (EditorGUI.EndChangeCheck())
-            {
-                // What's shown in the SceneView has potentially changed, so force it to repaint
-                CSGModel.UpdateAllBrushesVisibility();
-                SceneView.RepaintAll();
-            }
+            CurrentSettings.VertexPaintToolEnabled = GUILayout.Toggle(CurrentSettings.VertexPaintToolEnabled, "Vertex paint tool");
 
             EditorGUILayout.Space();
-            EditorGUI.indentLevel = 1;
-            EditorGUILayout.LabelField("Developer Options", EditorStyles.boldLabel);
-            EditorGUI.indentLevel = 0;
+            using (new SabreEditorGUI.IndentLevelScope()) {
+                EditorGUILayout.LabelField("Developer Options", EditorStyles.boldLabel);
+            }
             EditorGUILayout.Space();
 
             EditorGUI.BeginChangeCheck();
